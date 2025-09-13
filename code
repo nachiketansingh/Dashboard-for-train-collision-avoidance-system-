@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Train Collision Avoidance — Train Snapshot</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: #121933;
+      --panel-2: #0f1730;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --card-radius: 14px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 15% -10%, #13204d 0%, transparent 60%),
+                  radial-gradient(1000px 600px at 120% 0%, #1a244f 0%, transparent 60%),
+                  var(--bg);
+      color: var(--text);
+    }
+
+    header{
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(6px);
+      background: linear-gradient(to right, rgba(18,25,51,.8), rgba(15,23,48,.6));
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .wrap{ max-width: 1200px; margin: 0 auto; padding: 18px 20px; }
+
+    .brand{ display: flex; align-items: center; gap: 12px; }
+    .logo{
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow);
+    }
+    h1{ font-size: clamp(18px, 2.2vw, 22px); margin: 0; letter-spacing: .4px; }
+    .subtitle{ color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    main{ padding: 28px 20px 60px; }
+    .grid{
+      max-width: 1200px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 18px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    /* Speed Card */
+    .speed-card{ grid-column: span 4; display: grid; gap: 10px; }
+    .speed-label{ color: var(--muted); font-size: 13px; letter-spacing: .8px; text-transform: uppercase; }
+    .speed-value{ font-size: clamp(38px, 6vw, 56px); font-weight: 800; line-height: 1; }
+    .speed-unit{ font-size: 16px; color: var(--muted); margin-left: 6px; font-weight: 600; }
+    .speed-status{ font-size: 12px; padding: 6px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; }
+    .dot{ width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(16,185,129,.12); }
+
+    /* Track Card */
+    .track-card{ grid-column: span 8; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .track-item{ background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.04); padding: 14px; border-radius: 12px; }
+    .track-title{ font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .track-value{ font-size: 20px; font-weight: 700; margin-top: 6px; }
+
+    /* Identity Card */
+    .id-card{ grid-column: span 6; display: grid; gap: 10px; }
+    .row{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label{ display:block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .field div{ margin-top: 6px; font-size: 18px; font-weight: 700; }
+
+    /* Composition Card */
+    .composition-card{ grid-column: span 6; }
+    .chips{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .chip{ padding: 8px 12px; border-radius: 999px; font-size: 13px; border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02); }
+    .chip[data-type="primary"]{ outline: 2px solid rgba(125,211,252,.12); }
+
+    /* Route Card */
+    .route-card{ grid-column: span 12; display: grid; gap: 14px; }
+    .route{ display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+    .station{ background: rgba(255,255,255,.03); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.06); }
+    .station label{ display:block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .station div{ margin-top: 6px; font-size: 18px; font-weight: 700; }
+    .arrow{ font-size: 22px; color: var(--muted); padding: 0 6px; }
+
+    /* Loco Copilot Card */
+    .loco-card{ grid-column: span 6; display: grid; gap: 10px; }
+    .loco-card .avatar{ width:72px; height:72px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:inline-block; }
+    .loco-details{ display:flex; gap:12px; align-items:center; }
+    .loco-meta{ display:grid; gap:6px; }
+    .meta-label{ font-size:12px;color:var(--muted); text-transform:uppercase; letter-spacing:.7px; }
+    .meta-value{ font-weight:700; font-size:16px; }
+
+    /* Coaches Card */
+    .coaches-card{ grid-column: span 6; display: grid; gap:10px; }
+    .coach-bar{ height: 18px; background: rgba(255,255,255,.04); border-radius: 999px; overflow: hidden; border:1px solid rgba(255,255,255,.03); }
+    .coach-fill{ height:100%; width:70%; background: linear-gradient(90deg,var(--accent),var(--accent-2)); border-radius:999px; }
+    .coach-stats{ display:flex; justify-content:space-between; font-size:13px; color:var(--muted); }
+
+    /* Safety / Extra Card */
+    .safety-card{ grid-column: span 12; display:grid; gap:10px; }
+    .safety-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap:12px; }
+    .safety-item{ background: rgba(255,255,255,.02); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.03); }
+    .safety-item .val{ font-weight:700; font-size:16px; margin-top:6px; }
+
+    @media (max-width: 980px){
+      .speed-card{ grid-column: span 12; }
+      .track-card{ grid-column: span 12; grid-template-columns: 1fr; }
+      .id-card, .composition-card, .loco-card, .coaches-card{ grid-column: span 12; }
+      .safety-grid{ grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Train Collision Avoidance — Live Train Snapshot</h1>
+          <div class="subtitle">Single‑page HTML & CSS (no JS). Replace placeholders with live values.</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid">
+      <!-- Speed Card -->
+      <article class="card speed-card" aria-labelledby="speed-label">
+        <div class="speed-label" id="speed-label">Speed</div>
+        <div>
+          <span class="speed-value" id="speed-value">085</span>
+          <span class="speed-unit">km/h</span>
+        </div>
+        <div class="speed-status" title="Status based on limits">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="speed-status-text">Within permitted limit</span>
+        </div>
+      </article>
+
+      <!-- Track Card -->
+      <article class="card track-card" aria-labelledby="track-title">
+        <div class="track-item">
+          <div class="track-title">Current Track</div>
+          <div class="track-value" id="track-name">Down Main Line — Section A</div>
+        </div>
+        <div class="track-item">
+          <div class="track-title">Track ID / Block</div>
+          <div class="track-value" id="track-id">KM 123/18 to KM 127/02 (Block BK-47)</div>
+        </div>
+      </article>
+
+      <!-- Identity Card -->
+      <article class="card id-card">
+        <div class="row">
+          <div class="field">
+            <label for="train-no">Train No.</label>
+            <div id="train-no">12345</div>
+          </div>
+          <div class="field">
+            <label for="loco-phone">Loco Pilot Phone</label>
+            <div id="loco-phone">+91‑98765‑43210</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="loco-id">Loco ID</label>
+            <div id="loco-id">WAP‑7 #30291</div>
+          </div>
+          <div class="field">
+            <label for="guard-phone">Guard Phone</label>
+            <div id="guard-phone">+91‑99887‑66554</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Composition Card -->
+      <article class="card composition-card">
+        <div class="track-title">Train Type & Classes</div>
+        <div class="chips">
+          <span class="chip" data-type="primary" id="train-type">Ballast</span>
+          <span class="chip">General</span>
+          <span class="chip">3rd AC</span>
+          <span class="chip">2nd AC</span>
+          <span class="chip">1st AC</span>
+          <span class="chip">Sleepers</span>
+        </div>
+      </article>
+
+      <!-- Route Card -->
+      <article class="card route-card">
+        <div class="track-title">Route</div>
+        <div class="route">
+          <div class="station">
+            <label for="origin">Origin</label>
+            <div id="origin">NDLS — New Delhi</div>
+          </div>
+          <div class="arrow" aria-hidden="true">➜</div>
+          <div class="station">
+            <label for="destination">Destination</label>
+            <div id="destination">CNB — Kanpur Central</div>
+          </div>
+        </div>
+        <div class="track-title" style="margin-top:6px;">Via</div>
+        <div class="chips" aria-label="via-stations">
+          <span class="chip">GZB</span>
+          <span class="chip">ALJN</span>
+          <span class="chip">ETW</span>
+        </div>
+      </article>
+
+      <!-- Map Card -->
+      <article class="card" style="grid-column: span 12;">
+        
+        <div class="track-title">Train Location Map</div>
+        <div id="map" style="width: 100%; height: 400px; border-radius: 12px;"></div>
+        <body>
+    <div id="map"></div>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_API_KEY&callback=initMap&v=weekly&solution_channel=GMP_CCS_geolocation_v2"
+      defer
+    ></script>
+  </body>
+      </article>
+
+      
+      <!-- Loco Copilot Card -->
+      <article class="card loco-card">
+        <div class="track-title">Loco Copilot — Basic Info</div>
+        <div class="loco-details">
+          <div class="avatar" aria-hidden="true"></div> 
+          <div class="loco-meta">
+            <div>
+              <div class="meta-label">Name</div>
+              <div class="meta-value" id="copilot-name">S. Kumar</div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div>
+                <div class="meta-label">Badge / ID</div>
+                <div class="meta-value" id="copilot-id">CP‑1872</div>
+              </div>
+              <div>
+                <div class="meta-label">Phone</div>
+                <div class="meta-value" id="copilot-phone">+91‑91234‑56789</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
+              <div>
+                <div class="meta-label">Experience / Age</div>
+                <div class="meta-value" id="copilot-exp">8 yrs / 40yrs</div>
+              </div>
+              <div>
+                <div class="meta-label">Last Training</div>
+                <div class="meta-value" id="copilot-training">2025‑06‑24</div>
+              </div>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:12px;align-items:center;">
+              <div>
+                <div class="meta-label">Medical Fit</div>
+                <div class="meta-value" id="copilot-med">Yes</div>
+              </div>
+              <div>
+                <div class="meta-label">Rested</div>
+                <div class="meta-value" id="copilot-rest">No</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Coaches Card -->
+      <article class="card coaches-card">
+        <div class="track-title">Train Length & Coaches</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;">Number of coaches</div>
+            <div style="font-weight:800;font-size:22px;" id="coach-count">24</div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;">Avg coach length</div>
+            <div style="font-weight:700;font-size:18px;" id="coach-len">23 m</div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;">Estimated total length</div>
+            <div style="font-weight:700;font-size:18px;" id="total-len">552 m</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="coach-bar" aria-hidden="true">
+            <div class="coach-fill" style="width:70%;"></div>
+          </div>
+          <div class="coach-stats" style="margin-top:8px;">
+            <div id="occupied-block">Occupied block: 70%</div>
+            <div id="max-coach">Max per block: 34 coaches</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Safety Card -->
+      <article class="card safety-card">
+        <div class="track-title">Safety & Live Metrics</div>
+        <div class="safety-grid">
+          <div class="safety-item">
+            <div class="meta-label">Section Speed Limit</div>
+            <div class="val" id="section-limit">110 km/h</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Distance to Next Station</div>
+            <div class="val" id="dist-next">18.4 km</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">ETA to Next Station</div>
+            <div class="val" id="eta-next">00:12:30</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Signal Aspect</div>
+            <div class="val" id="signal">Green🟢</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Brake Status</div>
+            <div class="val" id="brake">Released</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Last Heartbeat</div>
+            <div class="val" id="heartbeat">2025‑09‑07 12:58:42</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Risk Level</div>
+            <div class="val" id="risk">Low</div>
+          </div>
+          <div class="safety-item">
+            <div class="meta-label">Maintenance Due</div>
+            <div class="val" id="maint">2025‑11‑15</div>
+          </div>
